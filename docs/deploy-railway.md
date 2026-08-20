@@ -1,4 +1,4 @@
-# Deploy Mai on Railway
+# Deploy MAI on Railway
 
 The repo ships `railway.json` (Dockerfile builder + start command), so Railway
 builds and runs it with no extra config files (`railway.json` takes precedence;
@@ -26,7 +26,7 @@ create **one project with three services**: `mai`, Postgres, and the
 MAI_DB_URL=postgresql+psycopg://${{Postgres.PGUSER}}:${{Postgres.PGPASSWORD}}@${{Postgres.RAILWAY_PRIVATE_DOMAIN}}:5432/${{Postgres.PGDATABASE}}
 ```
 
-(Reference syntax `${{Postgres.*}}` resolves at deploy time. Mai uses the
+(Reference syntax `${{Postgres.*}}` resolves at deploy time. MAI uses the
 psycopg3 driver; plain `postgresql://` and `postgres://` URLs are normalized
 automatically, so `MAI_DB_URL=${{Postgres.DATABASE_URL}}` also works — prefer
 the private-domain form above to keep traffic off the public network.)
@@ -41,7 +41,7 @@ the private-domain form above to keep traffic off the public network.)
 
 ```
 APP_PORT=3000
-APP_OS=Mai
+APP_OS=MAI
 APP_BASIC_AUTH=mai:<strong password>
 WHATSAPP_WEBHOOK=http://<mai private domain>:<mai PORT>/webhooks/whatsapp
 WHATSAPP_WEBHOOK_SECRET=<random hex, e.g. openssl rand -hex 32>

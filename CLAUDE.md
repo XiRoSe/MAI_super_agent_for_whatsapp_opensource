@@ -1,6 +1,6 @@
-# Mai — working notes for Claude Code
+# MAI — working notes for Claude Code
 
-Product is **Mai** (self-hostable WhatsApp AI assistant); repo is
+Product is **MAI** (self-hostable WhatsApp AI assistant); repo is
 **MAI_super_agent_for_whatsapp_opensource** (`XiRoSe/MAI_super_agent_for_whatsapp_opensource`).
 See `README.md` and `ARCHITECTURE.md`.
 

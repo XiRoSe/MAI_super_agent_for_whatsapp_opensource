@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in Mai is broken
+description: Something in MAI is broken
 title: "[Bug]: "
 labels: [bug, needs-triage]
 body:
@@ -29,7 +29,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Mai version
+      label: MAI version
       description: Release tag or git SHA (`git rev-parse --short HEAD`).
       placeholder: "0.1.0"
     validations:

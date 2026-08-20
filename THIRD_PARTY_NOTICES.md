@@ -1,8 +1,8 @@
 # Third-Party Notices
 
-Mai (MIT, © 2026 XiRoSe) depends on the third-party components below. Each is
+MAI (MIT, © 2026 XiRoSe) depends on the third-party components below. Each is
 licensed by its respective owner under the license indicated; those licenses
-apply to those components, not to Mai's own code. This list covers the direct,
+apply to those components, not to MAI's own code. This list covers the direct,
 notable dependencies — the lockfiles (`pyproject.toml`,
 `frontend/package-lock.json`) are authoritative for the full tree.
 
@@ -56,5 +56,5 @@ redistribute a build that bundles them, review the FFL terms yourself.
 
 ## Trademark notice
 
-WhatsApp is a trademark of WhatsApp LLC / Meta Platforms, Inc. Mai is not
+WhatsApp is a trademark of WhatsApp LLC / Meta Platforms, Inc. MAI is not
 affiliated with them — see [DISCLAIMER.md](DISCLAIMER.md).

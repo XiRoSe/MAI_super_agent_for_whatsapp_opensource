@@ -25,7 +25,7 @@ variables below and the gateway/Postgres services, so the values always match.
 | `MAI_LOG_LEVEL` | `INFO` | Log level for the structured JSON logs. |
 | `MAI_LOG_MESSAGE_BODIES` | `false` | If `true`, logs full message text. **Dev only.** |
 | `PORT` | `7777` | HTTP port the server binds (Railway injects its own). |
-| `PUBLIC_BASE_URL` | `http://localhost:7777` | The externally reachable base URL of this Mai instance (used for OAuth callbacks and sandbox callbacks). |
+| `PUBLIC_BASE_URL` | `http://localhost:7777` | The externally reachable base URL of this MAI instance (used for OAuth callbacks and sandbox callbacks). |
 
 ## Database
 
@@ -72,7 +72,7 @@ The whole app's "brain" switches with one variable — no code changes.
 | `WHATSAPP_GATEWAY_PASSWORD` | *(empty)* | Basic-auth password. |
 | `WHATSAPP_GATEWAY_API_KEY` | *(empty)* | `X-Api-Key` header for WAHA/Evolution-style gateways; leave blank for GOWA. |
 | `WHATSAPP_GATEWAY_WEBHOOK_SECRET` | *(empty)* | HMAC-SHA256 secret verifying inbound webhooks (`X-Hub-Signature-256`). Must equal the gateway's `WHATSAPP_WEBHOOK_SECRET`. Empty ⇒ allowed in dev, **rejected in production**. |
-| `WHATSAPP_CONTEXT_MESSAGES` | `10` | How many recent messages of the tagged chat are given to Mai as context. |
+| `WHATSAPP_CONTEXT_MESSAGES` | `10` | How many recent messages of the tagged chat are given to MAI as context. |
 | `WHATSAPP_VERIFY_TOKEN` / `WHATSAPP_APP_SECRET` / `WHATSAPP_ACCESS_TOKEN` / `WHATSAPP_PHONE_NUMBER_ID` / `WHATSAPP_API_VERSION` | *(empty / `v21.0`)* | Meta Cloud API settings — only used when `WHATSAPP_PROVIDER=meta`. |
 
 ## Dashboard auth
@@ -127,10 +127,10 @@ The whole app's "brain" switches with one variable — no code changes.
 | `CODE_EXEC_ENABLED` | `false` | Let the agent run Python in a sandbox. |
 | `E2B_API_KEY` | *(empty)* | E2B cloud sandbox key (one of the two sandbox backends). |
 | `RUNNER_URL` | *(empty)* | Base URL of a self-hosted `runner/` service (the other backend). |
-| `RUNNER_SHARED_SECRET` | *(empty)* | Auth between Mai and the runner. |
+| `RUNNER_SHARED_SECRET` | *(empty)* | Auth between MAI and the runner. |
 | `CODE_EXEC_TIMEOUT_SECONDS` | `300` | Sandbox wall-clock limit. |
 | `CODE_EXEC_SEND_CAP` | `10` | Max outbound sends a single sandbox run may trigger. |
-| `CODE_EXEC_TOKEN_TTL_SECONDS` | `300` | Lifetime of the token the sandbox uses to call back into Mai. |
+| `CODE_EXEC_TOKEN_TTL_SECONDS` | `300` | Lifetime of the token the sandbox uses to call back into MAI. |
 | `CODE_EXEC_MAX_RESULT_CHARS` | `6000` | Truncation limit for sandbox results. |
 | `SDK_BASE_URL` | *(empty)* | Public base URL the sandbox calls back to; empty derives from `PORT`. |
 | `GUARDRAIL_ENABLED` | `true` | Pre-flight LLM screen of generated code. |

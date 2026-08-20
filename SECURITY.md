@@ -23,7 +23,7 @@ message content from any logs you attach.
 
 ## What to expect
 
-Mai is maintained by a single developer. These are best-effort targets, not
+MAI is maintained by a single developer. These are best-effort targets, not
 guarantees:
 
 - Acknowledgement within **5 business days**
@@ -37,7 +37,7 @@ details.
 
 ## Scope notes
 
-- Mai reaches WhatsApp through an unofficial gateway,
+- MAI reaches WhatsApp through an unofficial gateway,
   [mai-gowa](https://github.com/XiRoSe/mai-gowa), a fork of
   [GOWA](https://github.com/aldinokemal/go-whatsapp-web-multidevice) built on
   [whatsmeow](https://github.com/tulir/whatsmeow). If a gateway issue reproduces
@@ -48,6 +48,6 @@ details.
   gateway/Postgres ports, default passwords you didn't change, no TLS — is out
   of scope unless the shipped defaults themselves are unsafe (that *is* in
   scope; tell us).
-- Prompt-injection reports are welcome: Mai treats forwarded chat content as
+- Prompt-injection reports are welcome: MAI treats forwarded chat content as
   untrusted input and has tests around that boundary, but it's an evolving area
   and an LLM-based assistant can never be fully injection-proof.

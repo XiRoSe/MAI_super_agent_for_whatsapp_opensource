@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Mai are documented here.
+All notable changes to MAI are documented here.
 
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [SemVer](https://semver.org/) — pre-1.0, **minor versions may
@@ -10,12 +10,12 @@ contain breaking changes**; read the notes before upgrading.
 
 ## [0.1.0] - 2026-08-20
 
-First public release. Mai is an MVP: functional, tested, and honest about its
+First public release. MAI is an MVP: functional, tested, and honest about its
 rough edges.
 
 ### Added
 
-- **@mai on your own number**: Mai links to the owner's WhatsApp via the
+- **@mai on your own number**: MAI links to the owner's WhatsApp via the
   [mai-gowa](https://github.com/XiRoSe/mai-gowa) gateway fork, stays silent, and
   acts only when the owner tags `@mai` in any chat — reading recent chat context
   and replying as the owner, in that chat.

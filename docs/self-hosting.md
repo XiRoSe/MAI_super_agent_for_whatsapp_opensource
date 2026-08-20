@@ -1,4 +1,4 @@
-# Self-hosting Mai with Docker Compose
+# Self-hosting MAI with Docker Compose
 
 This is the primary self-host path. You end up with three containers:
 
@@ -40,7 +40,7 @@ Required values in `.env`:
 | `MAI_KEK` | recommended: `python -c "import os,base64; print(base64.b64encode(os.urandom(32)).decode())"` — without it, encrypted chat history doesn't survive restarts |
 
 The compose file itself wires `MAI_DB_URL`, `WHATSAPP_PROVIDER=gowa`,
-`WHATSAPP_GATEWAY_URL`, and the gateway's webhook back to Mai — you don't set
+`WHATSAPP_GATEWAY_URL`, and the gateway's webhook back to MAI — you don't set
 those by hand.
 
 ## 3. Run
@@ -57,10 +57,10 @@ First build takes a few minutes (it also builds the gateway from source).
 1. Open `http://<host>:7777` and register a dashboard account.
 2. Go to the WhatsApp connection page and request the QR code.
 3. On your phone: **WhatsApp → Settings → Linked devices → Link a device**, scan.
-4. In any chat, send a message containing `@mai` (e.g. `@mai hello`). Mai replies
+4. In any chat, send a message containing `@mai` (e.g. `@mai hello`). MAI replies
    in that chat, from your number.
 
-Mai only reacts to *your own* messages containing `@mai` (plus guests in chats
+MAI only reacts to *your own* messages containing `@mai` (plus guests in chats
 you explicitly grant), so linking it doesn't change anything for your contacts.
 
 ## 5. Put it behind a reverse proxy (recommended)
@@ -113,7 +113,7 @@ docker compose build --no-cache gowa && docker compose up -d gowa
 
 ## Troubleshooting
 
-- **Mai never reacts to `@mai`** — the trigger fires on your *own outgoing*
+- **MAI never reacts to `@mai`** — the trigger fires on your *own outgoing*
   messages, so the gateway must forward them:
   `WHATSAPP_WEBHOOK_INCLUDE_OUTGOING=true` (the compose file sets it) and you
   must be running the mai-gowa fork, not stock GOWA. Check

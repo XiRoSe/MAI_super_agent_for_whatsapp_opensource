@@ -1,6 +1,6 @@
-# Contributing to Mai
+# Contributing to MAI
 
-Thanks for your interest. Mai is maintained by one person in spare time, so this
+Thanks for your interest. MAI is maintained by one person in spare time, so this
 guide is short and the process is lightweight.
 
 ## Before you start

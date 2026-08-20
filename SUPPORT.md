@@ -1,6 +1,6 @@
 # Support
 
-Mai is a solo-maintained project. Support is **best-effort, with no SLA** —
+MAI is a solo-maintained project. Support is **best-effort, with no SLA** —
 responses can take days.
 
 | I want to... | Go to |
@@ -16,7 +16,7 @@ be converted to Discussions.
 Before asking, please:
 
 - search existing issues and discussions;
-- include your Mai version (git SHA or release tag), deployment method
+- include your MAI version (git SHA or release tag), deployment method
   (compose / Railway / other), and gateway (mai-gowa) version;
 - attach relevant logs (`docker compose logs --tail=200 mai gowa`) with phone
   numbers, tokens, and message content redacted.

@@ -1,4 +1,4 @@
-# Mai — architecture
+# MAI (Modular AI) — architecture
 
 One Python service (FastAPI + [Agno](https://github.com/agno-agi/agno) 2.x), one
 database (Postgres; SQLite for local dev), one WhatsApp gateway
@@ -91,8 +91,8 @@ processing happens in a background task so the gateway gets an instant 200.
 messages containing `@mai`**, everything else is ignored; guests can trigger it
 only in chats the owner granted (`access.py`). `media_in.py` reads inbound
 images/audio via Replicate; `encstore.py` is the encrypted, time-windowed message
-store — Mai's only chat history; `connections.py` handles QR login / status;
-`dedupe.py` stops Mai reacting to its own replies. A `meta.py` provider for the
+store — MAI's only chat history; `connections.py` handles QR login / status;
+`dedupe.py` stops MAI reacting to its own replies. A `meta.py` provider for the
 official Cloud API exists but the product model targets `gowa`.
 
 **`scheduling/`** — `spec.py` (validated, tz-aware `ScheduleSpec`), `models.py`,
@@ -109,7 +109,7 @@ every other entry point.
 epoch; each private key is wrapped (NaCl secretbox) under the KEK (`MAI_KEK`)
 before storage, and old epochs are crypto-shredded (`purge.py`). `sealing.py`
 implements NaCl sealed boxes wire-compatible with Go, so the gateway can seal
-message bodies to Mai's current public key (`api.py` serves it at
+message bodies to MAI's current public key (`api.py` serves it at
 `GET /internal/seal-pubkey`, token-gated).
 
 **Skills** — `skills_loader.py` loads bundled `SKILL.md` packages from `skills/`
@@ -119,7 +119,7 @@ temp dir for Agno's `LocalSkills`.
 
 **`code_exec/` + `runner/`** — optional "code as action": the agent writes Python
 that runs in a sandbox (E2B cloud, or the self-hosted stateless `runner/`
-service) and calls back into Mai through a short-lived token-scoped SDK
+service) and calls back into MAI through a short-lived token-scoped SDK
 (`sdk_api.py`, `dispatch.py`) with guardrails and send caps.
 
 **Everything else** — `chat_history.py` (unified web + WhatsApp transcript for
@@ -207,7 +207,7 @@ The details that matter:
 
 ### Replicate: any model, no pinned models (`backend/tools/replicate_tools.py`)
 
-Rather than wiring specific models ("image gen = X, transcription = Y"), Mai
+Rather than wiring specific models ("image gen = X, transcription = Y"), MAI
 gives the agent three *generic* tools and lets it choose per task:
 
 1. `search_models(query)` — find candidate models for the task at hand
@@ -234,7 +234,7 @@ the agent decides whether to run a vision/Whisper model when you actually ask
 ### Sandboxed code execution (`backend/code_exec/` + `runner/`)
 
 Optional, off by default (`CODE_EXEC_ENABLED=false`). When on, the agent can
-solve compute-shaped tasks by *writing Python* that runs outside Mai's process
+solve compute-shaped tasks by *writing Python* that runs outside MAI's process
 and talks back through a narrow, authenticated SDK.
 
 ```mermaid
@@ -242,7 +242,7 @@ sequenceDiagram
   participant A as agent
   participant G as guardrails.py
   participant X as sandbox (E2B or runner/)
-  participant S as sdk_api.py (Mai)
+  participant S as sdk_api.py (MAI)
   A->>G: generated Python
   G-->>A: unsafe verdict → refuse (fails OPEN on infra errors — the sandbox is the boundary)
   A->>X: run code + inject mai.py SDK + one-run token
@@ -265,7 +265,7 @@ Layer by layer:
   run in a hardened, ephemeral subprocess — `RLIMIT_CPU` (timeout+1),
   `RLIMIT_AS` (memory), `RLIMIT_FSIZE` (10 MB), `RLIMIT_NPROC` (64), throwaway
   temp dir, zero state between runs (`runner/executor.py`). Neither backend
-  can see Mai's process, database, or keys.
+  can see MAI's process, database, or keys.
 - **The `mai` SDK (`mai_sdk.py`)** is a single file uploaded into the sandbox
   and imported as `mai`. Every call it makes goes over HTTP to
   `POST /internal/sdk/{fn}` with a **one-run bearer token** minted by
