@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mai"
+version = "0.1.0"
+description = "Mai — your own AI assistant on WhatsApp. Self-hostable, silent until you tag @mai."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "XiRoSe" }]
+
+dependencies = [
+    # Core agent runtime
+    "agno>=2.6.0",
+    "openai>=1.40.0",          # used by OpenAILike/OpenRouter model classes
+    "anthropic>=0.40.0",       # alternative model provider (config switch)
+    "ddgs>=6.0.0",             # DuckDuckGo web search backend (no API key)
+    "replicate>=1.0.0",        # run AI models (image/video/audio/etc.) via Replicate
+    "e2b-code-interpreter>=1.0.0",  # isolated cloud sandbox for run_python
+    # Web / server
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "httpx>=0.27.0",
+    # Config & validation
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.2.0",
+    "python-dotenv>=1.0.0",
+    "numpy>=1.26.0",           # cosine math for semantic memory/skill recall
+    # Persistence
+    "sqlalchemy>=2.0.0",
+    "psycopg[binary]>=3.1.0",  # Postgres driver (Railway)
+    # Crypto for OAuth token-at-rest encryption
+    "cryptography>=42.0.0",
+    "pynacl>=1.5.0",          # NaCl sealed boxes (X25519 + XSalsa20-Poly1305) for the encrypted message store
+    # Scheduling helpers
+    "croniter>=2.0.0",
+    "python-dateutil>=2.9.0",
+    "tzdata>=2024.1",          # IANA tz database (needed on Windows)
+    "pytz>=2024.1",            # agno scheduler requires pytz
+    # Dashboard auth (JWT + password hashing)
+    "pyjwt>=2.8.0",
+    "bcrypt>=4.1.0",
+    "email-validator>=2.0.0",  # for pydantic EmailStr in auth
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "freezegun>=1.4.0",
+    "ruff>=0.4.0",
+]
+
+[project.scripts]
+mai = "backend.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["backend*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "live: live-model eval (needs a model API key); excluded from the default run by testpaths",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

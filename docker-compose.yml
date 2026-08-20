@@ -1,0 +1,75 @@
+# Mai — self-hosted stack: Mai (API + agent + dashboard), the mai-gowa WhatsApp
+# gateway, and Postgres.
+#
+# Usage:
+#   cp .env.example .env     # fill in the required values (see README quick start)
+#   docker compose up -d --build
+#   open http://localhost:7777
+#
+# Notes:
+# - `mai` builds from this repo (no prebuilt image is published yet).
+# - `gowa` builds straight from the mai-gowa GitHub repo. Mai REQUIRES this fork
+#   (device_id routing + from_me webhook events); stock GOWA will not work.
+# - The gateway is NOT published to the host on purpose — Mai reaches it on the
+#   internal network, and its UI/API should never be exposed to the internet.
+
+name: mai
+
+services:
+  mai:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Wiring between the compose services. These override anything in .env.
+      MAI_DB_URL: postgresql+psycopg://mai:${POSTGRES_PASSWORD:-mai}@postgres:5432/mai
+      WHATSAPP_PROVIDER: gowa
+      WHATSAPP_GATEWAY_URL: http://gowa:3000
+      WHATSAPP_GATEWAY_USER: ${GOWA_USER:-mai}
+      WHATSAPP_GATEWAY_PASSWORD: ${GOWA_PASSWORD:?set GOWA_PASSWORD in .env}
+      WHATSAPP_GATEWAY_WEBHOOK_SECRET: ${GOWA_WEBHOOK_SECRET:?set GOWA_WEBHOOK_SECRET in .env}
+      PORT: "7777"
+    ports:
+      - "7777:7777"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gowa:
+        condition: service_started
+
+  gowa:
+    build:
+      context: https://github.com/XiRoSe/mai-gowa.git
+      dockerfile: docker/golang.Dockerfile
+    restart: unless-stopped
+    environment:
+      APP_PORT: "3000"
+      APP_OS: Mai                      # device name shown in WhatsApp "Linked devices"
+      APP_BASIC_AUTH: ${GOWA_USER:-mai}:${GOWA_PASSWORD:?set GOWA_PASSWORD in .env}
+      WHATSAPP_WEBHOOK: http://mai:7777/webhooks/whatsapp
+      WHATSAPP_WEBHOOK_SECRET: ${GOWA_WEBHOOK_SECRET:?set GOWA_WEBHOOK_SECRET in .env}
+      # Mai's @mai trigger fires on YOUR OWN messages — outgoing events must flow.
+      WHATSAPP_WEBHOOK_INCLUDE_OUTGOING: "true"
+      WHATSAPP_AUTO_DOWNLOAD_MEDIA: "true"
+    volumes:
+      - gowa_storage:/app/storages     # WhatsApp session + chat DBs — losing this = re-scan QR
+    # No `ports:` — internal only. Mai proxies what you need (QR, status).
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mai
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mai}
+      POSTGRES_DB: mai
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mai -d mai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  gowa_storage:
+  pg_data:

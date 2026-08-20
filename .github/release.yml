@@ -1,0 +1,15 @@
+changelog:
+  exclude:
+    labels: [skip-changelog, dependencies]
+    authors: [dependabot]
+  categories:
+    - title: Breaking changes
+      labels: [breaking]
+    - title: Features
+      labels: [enhancement, feature]
+    - title: Fixes
+      labels: [bug, fix]
+    - title: Self-hosting & docs
+      labels: [self-hosting, documentation]
+    - title: Other
+      labels: ["*"]

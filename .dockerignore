@@ -1,0 +1,24 @@
+# Keep host-side artifacts out of the Docker build context.
+# Critical: frontend/node_modules must NOT be copied over the image's own
+# `npm ci` output (host binaries are platform-specific and break the build).
+.git
+.github
+.venv
+**/__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.env
+.env.*
+!.env.example
+tmp/
+*.db
+*.sqlite
+*.sqlite3
+static/
+frontend/node_modules
+frontend/dist
+evals/logs
+.idea
+.claude
+.playwright-mcp

@@ -1,0 +1,285 @@
+:root {
+  --mai-bg: #0a0e12;
+  --mai-bg-soft: #0f151b;
+  --mai-panel: #121a21;
+  --mai-line: #1f2a33;
+  --mai-accent: #5effb0;
+  --mai-accent-dim: #21d4a8;
+  --mai-text: #e8f0ee;
+  --mai-muted: #8a9aa3;
+  --font-display: "Clash Display", "Satoshi", system-ui, sans-serif;
+  --font-body: "Satoshi", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  background: var(--mai-bg);
+  color: var(--mai-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Atmospheric aurora + grain for auth screens */
+.mai-aurora {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(94, 255, 176, 0.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(33, 212, 168, 0.10), transparent 60%),
+    var(--mai-bg);
+}
+.mai-aurora::after {
+  content: "";
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.mai-display { font-family: var(--font-display); letter-spacing: -0.02em; }
+.mai-mono { font-family: var(--font-mono); }
+
+.mai-glow {
+  box-shadow: 0 0 0 1px rgba(94,255,176,0.15), 0 20px 60px -20px rgba(94,255,176,0.25);
+}
+
+/* Brand wordmark */
+.mai-wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  background: linear-gradient(120deg, var(--mai-accent), var(--mai-accent-dim));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Page-load stagger */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.rise { animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--mai-line); border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* Chat bubbles */
+.chat-scroll { scrollbar-width: thin; }
+.bubble {
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;   /* break only genuinely long words, not every word */
+}
+.bubble.user { background: linear-gradient(135deg, var(--mai-accent), var(--mai-accent-dim)); color: #06231a; border-bottom-right-radius: 4px; }
+.bubble.mai { background: var(--mai-panel); border: 1px solid var(--mai-line); border-bottom-left-radius: 4px; }
+
+/* ---- Auth split layout (desktop default) ---- */
+.mai-auth { display: grid; grid-template-columns: 1.1fr 1fr; min-height: 100vh; }
+
+/* ---- Mobile-only adjustments (desktop is intentionally unchanged) ---- */
+.mai-burger { display: none; }   /* hamburger shows only on small screens */
+
+/* Aligned to Ant Design's `lg` breakpoint (the Sider collapses below 992px). */
+@media (max-width: 991.98px) {
+  /* Auth: stack to one column, hide the marketing aside, show the form full-width */
+  .mai-auth { grid-template-columns: 1fr; }
+  .mai-auth-aside { display: none; }
+
+  /* Dashboard: reveal the hamburger, hide the long email, tighten content padding */
+  .mai-burger { display: inline-flex !important; }
+  .mai-user-email { display: none !important; }
+  .mai-content { padding: 16px !important; }
+
+  /* Big display headings shouldn't overflow tiny screens */
+  .mai-display { letter-spacing: -0.01em; }
+  h1.mai-display { font-size: clamp(22px, 7vw, 30px) !important; }
+}
+
+@media (max-width: 480px) {
+  .mai-content { padding: 12px !important; }
+}
+
+/* ---- Mobile foundation additions ---- */
+
+/* Prevent iOS input zoom (inputs < 16px trigger auto-zoom on Safari) */
+@media (max-width: 991.98px) {
+  .ant-input,
+  .ant-input-affix-wrapper input,
+  textarea.ant-input,
+  .ant-select-selection-search-input {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe-area insets for notched/gesture-bar phones */
+@media (max-width: 991.98px) {
+  .mai-content {
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
+  .mai-aurora {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Header safe-area top padding (applied via className in Layout.tsx) */
+.mai-header-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Comfortable tap targets on mobile */
+@media (max-width: 991.98px) {
+  .ant-menu-item {
+    min-height: 46px !important;
+  }
+  .ant-btn {
+    min-height: 44px !important;
+  }
+}
+
+/* Full-height: prefer dynamic viewport height so mobile browser chrome/keyboard don't clip */
+.dvh-full {
+  /* fallback for browsers that don't support dvh */
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Horizontal scroll wrapper for wide tables on mobile */
+.mai-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* AntD modals: fit phones */
+@media (max-width: 991.98px) {
+  .ant-modal {
+    max-width: calc(100vw - 24px) !important;
+    margin: 12px auto !important;
+  }
+}
+
+/* Airier: ensure section headings have comfortable breathing room on mobile */
+@media (max-width: 991.98px) {
+  h1.ant-typography,
+  h2.ant-typography,
+  .mai-display {
+    margin-bottom: 12px;
+  }
+}
+
+/* Chat: icon-only Send button on mobile (label hidden, icon stays) */
+@media (max-width: 991.98px) {
+  .mai-btn-label {
+    display: none;
+  }
+}
+
+/* Plan tag: hide on very small screens to prevent header overflow */
+@media (max-width: 380px) {
+  .mai-plan-tag {
+    display: none !important;
+  }
+}
+
+/* ---- Mobile auth hero (shown only on mobile, hidden on desktop) ---- */
+.mai-auth-hero {
+  display: none; /* hidden on desktop */
+}
+.mai-auth-hero-headline {
+  font-size: 22px;
+  line-height: 1.15;
+  margin: 10px 0 4px;
+}
+.mai-auth-hero-sub {
+  font-size: 13px;
+  color: var(--mai-muted);
+  margin: 0;
+}
+@media (max-width: 991.98px) {
+  .mai-auth-hero {
+    display: block;
+    padding: 28px 0 16px;
+    text-align: left;
+  }
+}
+
+/* Chat: prefer dynamic viewport height so keyboard doesn't clip the input */
+@supports (height: 100dvh) {
+  .mai-chat-container {
+    height: calc(100dvh - 130px);
+  }
+}
+
+/* Chat input row: respect safe-area-inset-bottom on mobile */
+@media (max-width: 991.98px) {
+  .mai-chat-input-row {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ---- Mobile auth: mode toggle, card, xlink, step hint ---- */
+
+/* Toggle — rendered always, hidden on desktop so it has no layout effect */
+.mai-auth-toggle { display: none; }
+
+/* Step hint — rendered only on Register, hidden by default (shown on mobile below) */
+.mai-auth-step { display: none; }
+
+/* Formwrap — passthrough on desktop; becomes a card on mobile */
+/* (no desktop rules: the parent .rise + inline width: 360 already control desktop layout) */
+
+@media (max-width: 991.98px) {
+  /* Show the segmented mode toggle, full-width */
+  .mai-auth-toggle {
+    display: block;
+    margin-bottom: 20px;
+  }
+  .mai-auth-toggle .ant-segmented,
+  .mai-auth-toggle .ant-segmented-group {
+    width: 100%;
+  }
+  .mai-auth-toggle .ant-segmented-item {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Formwrap: contained card */
+  .mai-auth-formwrap {
+    background: var(--mai-panel);
+    border: 1px solid var(--mai-line);
+    border-radius: 20px;
+    padding: 24px 20px;
+    box-shadow:
+      0 20px 60px -30px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(94, 255, 176, 0.04);
+    width: 100%;
+    max-width: 420px;
+    margin-inline: auto;
+  }
+
+  /* Cross-link paragraph: hidden (segmented toggle serves this purpose on mobile) */
+  .mai-auth-xlink { display: none; }
+
+  /* Step hint: shown on Register mobile */
+  .mai-auth-step {
+    display: block;
+    text-align: center;
+    color: var(--mai-muted);
+    font-size: 12.5px;
+    margin-top: 16px;
+  }
+  .mai-auth-step-dot {
+    color: var(--mai-accent);
+    margin-right: 4px;
+  }
+}

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or self-hosting help
+    url: https://github.com/XiRoSe/MAI_super_agent_for_whatsapp_opensource/discussions
+    about: Please ask questions in Discussions, not issues.
+  - name: Security vulnerability
+    url: https://github.com/XiRoSe/MAI_super_agent_for_whatsapp_opensource/security/advisories/new
+    about: Report privately via GitHub. Do not open a public issue.

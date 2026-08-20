@@ -1,0 +1,14 @@
+.venv/
+.git/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+tmp/
+*.db
+*.sqlite*
+*.log
+install.log
+.env
+frontend/node_modules/
+frontend/dist/

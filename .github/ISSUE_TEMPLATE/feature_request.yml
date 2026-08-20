@@ -1,0 +1,37 @@
+name: Feature request
+description: A small, well-scoped improvement (bigger ideas → Discussions)
+title: "[Feature]: "
+labels: [enhancement, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that Mai doesn't let you do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: willing
+    attributes:
+      label: Are you willing to implement this?
+      options:
+        - "Yes, with guidance"
+        - "Maybe"
+        - "No"
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This is a focused change, not a redesign (redesigns start in Discussions).
+          required: true

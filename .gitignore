@@ -1,0 +1,47 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+*.log
+install.log
+.env
+.env.*
+!.env.example
+tmp/
+*.db
+*.sqlite
+*.sqlite3
+.DS_Store
+
+# built frontend (created during Docker build)
+static/
+node_modules/
+frontend/dist/
+
+# development-process docs (kept locally, not committed)
+DECISIONS.md
+PROGRESS.md
+DEPLOYMENT.md
+
+# Superpowers dev-process docs (specs, plans, SDD scratch) — keep local, not in git
+.superpowers/
+docs/superpowers/
+marketing/
+
+# eval run logs (local inspection only)
+evals/logs/
+
+# IDE + local agent settings
+.idea/
+.claude/settings.local.json
+
+# stray sqlite in-memory artifact (agno writes a file named ":memory:")
+:memory:
+
+# local agent/browser tooling artifacts
+.playwright-mcp/
+.claude/
+/*.png
+docs/open-source/

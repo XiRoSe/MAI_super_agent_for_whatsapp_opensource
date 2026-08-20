@@ -1,0 +1,69 @@
+name: Bug report
+description: Something in Mai is broken
+title: "[Bug]: "
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please **redact phone numbers, tokens, API keys, and message content** from logs before pasting.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and discussions.
+          required: true
+        - label: This is not a security issue (those go to the Security tab, privately).
+          required: true
+  - type: dropdown
+    id: deploy
+    attributes:
+      label: Deployment method
+      options:
+        - Docker Compose (this repo's docker-compose.yml)
+        - Railway
+        - Other (describe below)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Mai version
+      description: Release tag or git SHA (`git rev-parse --short HEAD`).
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: gateway
+    attributes:
+      label: Gateway (mai-gowa) version
+      description: Tag/SHA of the mai-gowa build, if the problem involves WhatsApp.
+      placeholder: "mai-gowa @ main, built 2026-08-20"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: "`docker compose logs --tail=200 mai gowa` — auto-formatted as code, remember to redact."
+      render: shell
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "Ubuntu 24.04, Docker 27, amd64, MODEL_PROVIDER=together"

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mai eval report — {{GENERATED_AT}}</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+         margin: 2rem auto; max-width: 56rem; padding: 0 1rem; }
+  h1 { font-size: 1.2rem; margin: 0 0 .3rem; }
+  .meta { color: #777; font-size: .82rem; margin-bottom: 1.3rem; }
+  .meta code { background: #8881; padding: .08rem .3rem; border-radius: .25rem; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { padding: .45rem .6rem; border-bottom: 1px solid #8883; }
+  th { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #999;
+       font-weight: 600; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  td { text-align: right; }
+  .badge { font-size: .72rem; font-weight: 700; padding: .1rem .45rem; border-radius: .35rem; }
+  .pass { background: #15803d22; color: #15803d; }
+  .fail { background: #b91c1c22; color: #b91c1c; }
+  /* expandable rows */
+  tr.parent { cursor: pointer; }
+  tr.parent:hover { background: #8881; }
+  .caret { display: inline-block; width: 1em; color: #999; transition: transform .12s; }
+  tr.parent.open .caret { transform: rotate(90deg); }
+  tr.child { display: none; color: #888; }
+  tr.child.show { display: table-row; }
+  tr.child td { border-bottom: 1px solid #8882; }
+  td.run { padding-left: 1.8rem; font-size: .85rem; }
+  /* tag filter chips */
+  .chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0 0 .8rem; }
+  .chip { font-size: .74rem; padding: .14rem .55rem; border: 1px solid #8885;
+          border-radius: 1rem; cursor: pointer; color: #888; user-select: none; }
+  .chip:hover { background: #8881; }
+  .chip.active { background: #2a78d6; border-color: #2a78d6; color: #fff; }
+  /* per-tag pass-rate bars */
+  .tagbars { display: grid; grid-template-columns: max-content 1fr max-content max-content;
+             gap: .3rem .7rem; align-items: center; margin-bottom: 1.4rem;
+             font-variant-numeric: tabular-nums; }
+  .tagrow { display: contents; cursor: pointer; }
+  .tagrow:hover .tagname { color: inherit; }
+  .tagname { font-size: .82rem; color: #888; }
+  .bar { display: block; height: 8px; background: #8882; border-radius: 4px;
+         overflow: hidden; min-width: 10rem; }
+  .fill { display: block; height: 100%; border-radius: 4px; }
+  .fill.ok { background: #2a78d6; }
+  .fill.bad { background: #d03b3b; }
+  .tagnum { font-size: .82rem; font-weight: 600; text-align: right; }
+  .tagn { font-size: .74rem; color: #999; }
+  /* tag pills on scenario rows */
+  .tag { font-size: .64rem; color: #999; border: 1px solid #8884; border-radius: .6rem;
+         padding: .02rem .35rem; margin-left: .35rem; vertical-align: 1px; }
+  @media (prefers-color-scheme: dark) {
+    .chip.active { background: #3987e5; border-color: #3987e5; }
+    .fill.ok { background: #3987e5; }
+  }
+</style>
+</head>
+<body>
+  <h1>Mai eval report</h1>
+  <div class="meta">
+    model <code>{{MODEL}}</code> · rev <code>{{GIT_REV}}</code> · {{GENERATED_AT}}<br>
+    {{RUNS}} run/scenario · tool_call_limit {{TOOL_CALL_LIMIT}} · timeout {{TIMEOUT}}s · pass &ge; {{THRESHOLD}}
+    · total cost <code>${{TOTAL_COST}}</code>
+    <br><span style="font-size:.78rem">click a row to expand its executions &middot; click a tag to filter</span>
+  </div>
+{{TAG_PANEL}}
+  <table>
+    <thead><tr>
+      <th>Scenario</th><th>Result</th><th>Pass</th><th>Coverage</th>
+      <th>Tool</th><th>SDK</th><th>Wasted</th><th>Think</th><th>p50 s</th><th>Tok out</th><th>Cost $</th>
+    </tr></thead>
+    <tbody>
+{{ROWS}}
+    </tbody>
+  </table>
+  <script>
+    document.querySelectorAll('tr.parent').forEach(function (p) {
+      p.addEventListener('click', function () {
+        p.classList.toggle('open');
+        document.querySelectorAll('tr.' + p.dataset.cls).forEach(function (c) {
+          c.classList.toggle('show');
+        });
+      });
+    });
+    // Tag filtering: chips and bar rows both filter the table to scenarios carrying
+    // the tag. "all" (empty tag) resets. Children stay tied to their parent's toggle.
+    function setFilter(tag) {
+      document.querySelectorAll('.chip').forEach(function (c) {
+        c.classList.toggle('active', c.dataset.tag === tag);
+      });
+      document.querySelectorAll('tr.parent').forEach(function (p) {
+        var show = !tag || (p.dataset.tags || '').split(' ').indexOf(tag) !== -1;
+        p.style.display = show ? '' : 'none';
+        document.querySelectorAll('tr.' + p.dataset.cls).forEach(function (c) {
+          if (!show) { c.classList.remove('show'); p.classList.remove('open'); }
+        });
+      });
+    }
+    document.querySelectorAll('.chip').forEach(function (c) {
+      c.addEventListener('click', function () { setFilter(c.dataset.tag); });
+    });
+    document.querySelectorAll('.tagrow').forEach(function (r) {
+      r.addEventListener('click', function () { setFilter(r.dataset.tag); });
+    });
+  </script>
+</body>
+</html>
