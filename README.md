@@ -42,6 +42,42 @@ already have, and only wakes up when you summon it.
 - **Skills and memory.** Per-user skills are plain-Markdown `SKILL.md` packages you
   can add and edit; agentic memory plus semantic recall keeps what matters and
   injects only the relevant pieces each turn.
+- **Any AI model, one tag away.** Through Replicate, Mai can discover and run
+  virtually any hosted model — image generation and editing, transcription,
+  text-to-speech, video, upscaling — without you pinning a single model name.
+- **Encrypted by design.** Message payloads are sealed by the gateway to a
+  rotating key before they ever reach Mai's process; nothing readable sits in
+  the database.
+
+### What that looks like
+
+```text
+── family group ────────────────────────────────────────────────
+Mom:   are we doing dinner friday or saturday??
+Dad:   saturday works
+Sis:   friday better for me
+You:   @mai summarize where this landed and suggest a time
+Mai:   Split vote: Dad wants Saturday, your sister Friday. Mom asked,
+       no preference. Suggestion: Friday 19:30 — reply here to confirm?
+
+── chat with a client ──────────────────────────────────────────
+Client: can you send over the invoice by eod?
+You:    @mai reply politely that it'll be there by 6pm, in Spanish
+Mai:    (sends as you) Claro — la factura estará en tu correo hoy
+        antes de las 18:00. ¡Gracias por la paciencia!
+
+── your self-chat (notes to self) ──────────────────────────────
+You:   @mai every weekday at 8am send me a brief of my unread groups
+Mai:   Scheduled ✓ — weekdays 08:00 (Asia/Jerusalem), delivered here.
+
+You:   @mai make a birthday image for Dana — golden retriever in a
+       party hat, photorealistic
+Mai:   (sends image) Generated with flux — want me to send it to Dana?
+
+You:   @mai what did the football group decide while I was offline?
+Mai:   They moved the game to Sunday 18:00 (same field). Tom can't
+       make it; they're one short — want me to volunteer you?
+```
 
 ## Features
 
@@ -52,8 +88,10 @@ already have, and only wakes up when you summon it.
 - Per-user skills as editable `SKILL.md` packages, with semantic recall
 - Long-term agentic memory plus a per-user "understanding" that evolves in the background
 - Delegated per-chat access for other people, with a restricted guest toolset
-- Media in and out: reads images/audio you receive, generates images via Replicate
-- Optional sandboxed Python execution (E2B cloud sandbox or a self-hosted `runner/`)
+- Media in and out: describes images and transcribes voice notes you receive, generates images/video
+- Run almost any AI model through Replicate: the agent searches, reads the schema, and runs it
+- Optional sandboxed Python execution (E2B cloud sandbox or a self-hosted hardened `runner/`)
+- Sealed-payload encryption: rotating epoch keys, KEK-wrapped at rest, no plaintext messages in the DB
 - Web dashboard (React + Ant Design) served by the same container — chat, schedules, skills, connection QR
 
 ## Quick start (Docker Compose)
@@ -108,6 +146,98 @@ the trigger, builds a per-user agent (model + memory + skills + tools), and send
 the reply back through the gateway into the same chat.
 
 More detail: [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Scheduled tasks
+
+Mai turns natural language into validated schedules — no cron syntax needed
+(though `create_schedule` stores a real 5-field cron under the hood):
+
+```text
+@mai remind me tomorrow at 9 to renew the passport
+@mai every friday at 16:00 ask the football group who's in for sunday
+@mai on the 1st of each month send me a summary of my subscriptions chat
+```
+
+How it works, concretely:
+
+- The agent converts your request into a **typed `ScheduleSpec`** (one-off
+  `run_at` or recurring `cron`), validated before anything is stored — an
+  impossible date or a missing field fails loudly instead of silently.
+- **Timezone-aware end to end.** Schedules run in *your* IANA timezone, not the
+  server's (servers are UTC). A bare "8am" is rejected until Mai knows your tz —
+  it will ask once and remember.
+- An in-process **poller checks every 15 seconds** and fires due jobs — one-off
+  times in the past fire immediately once; cron entries are matched in the
+  schedule's own timezone. Restart-safe and idempotent.
+- **Fires where you asked.** A schedule created by tagging `@mai` in a group
+  delivers into that group; otherwise it lands in your self-chat/DM.
+- Manage everything (list, edit, pause, delete) from the **dashboard** or by
+  just asking: `@mai what's on my schedule?`.
+
+## Almost any AI model, via Replicate
+
+Set one env var (`REPLICATE_API_TOKEN`) and Mai's agent gets three generic tools
+instead of a hardcoded model list:
+
+| Tool | What the agent does with it |
+|---|---|
+| `search_models` | Discover a model for the task at hand — image gen/edit, transcription, TTS, video, upscaling, background removal… |
+| `get_model_schema` | Fetch that model's exact input fields, so calls are well-formed |
+| `run_model` | Run **any public Replicate model** (`owner/name`) with a JSON of inputs |
+
+No models are pinned: when you say *"@mai turn this photo into a Pixar-style
+render"*, the agent searches, reads the schema, runs the best match, and sends
+the result back into the chat as real WhatsApp media (`send_image` /
+`send_video`). The same mechanism powers **incoming** media: photos you receive
+are described by a vision model and voice notes transcribed by Whisper, so
+`@mai what did she send?` just works. Defaults are configurable
+(`REPLICATE_VISION_MODEL`, `REPLICATE_TRANSCRIBE_MODEL`, `REPLICATE_VIDEO_MODEL`).
+
+## Sandboxed code execution
+
+Optional (off by default: `CODE_EXEC_ENABLED=false`). When enabled, Mai can
+*write and run Python* for tasks that need real computation — crunching a CSV
+someone sent, scraping a page, doing date math across chats — using a small
+`mai` SDK injected into the sandbox.
+
+Two isolation backends, your choice:
+
+- **E2B cloud sandbox** (`E2B_API_KEY`) — each run gets a disposable cloud VM.
+- **Self-hosted `runner/` service** (`RUNNER_URL` + `RUNNER_SHARED_SECRET`) — a
+  tiny FastAPI service that executes each run in a **hardened, ephemeral
+  subprocess**: CPU, memory (`RLIMIT_AS`), file-size and process-count rlimits,
+  a hard timeout, a throwaway temp dir, and zero state between runs.
+
+Defense in depth around either backend: an **LLM guardrail pre-screens the
+generated code** before execution, sandbox→Mai callbacks use **short-TTL scoped
+tokens**, and outbound messages from sandboxed code are **capped per run**
+(`CODE_EXEC_SEND_CAP`) so a runaway script can't spam anyone.
+
+## Encryption & privacy
+
+Mai is built on the assumption that your WhatsApp messages are radioactive —
+so it never stores them readable:
+
+- **Sealed at the gateway.** The mai-gowa fork encrypts message bodies (and
+  stored chat names) as **NaCl sealed boxes** — `NSEAL:<epoch>:<ciphertext>` —
+  to Mai's current epoch public key *before* they cross the wire. Payloads
+  arrive at Mai's webhook already encrypted.
+- **Rotating epoch keys.** The sealing key rotates every ~2 days. The gateway
+  fetches only the *public* key from a token-gated internal endpoint; epoch
+  **private keys are persisted exclusively as KEK-wrapped ciphertext**
+  (`MAI_KEK`) — a database dump alone cannot decrypt anything.
+- **No plaintext at rest.** Message plaintext never leaves the crypto layer to
+  disk; old sealed data is purged on a retention schedule
+  (`MAI_SEAL_RETENTION_DAYS`).
+- **Encrypted credential vault.** Per-user service credentials and OAuth tokens
+  are Fernet-encrypted (`MAI_ENCRYPTION_KEY`) before storage.
+- **Fail-closed.** In production, missing `MAI_KEK` / `MAI_JWT_SECRET` /
+  `MAI_ENCRYPTION_KEY` refuse to run rather than degrade quietly; tenant
+  isolation errors out instead of leaking across accounts.
+- **Your LLM, your call.** Message content is sent to the model provider *you*
+  configure — and nowhere else. Self-hosted Mai has no telemetry.
+
+Details: [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/gowa.md](docs/gowa.md).
 
 ## The gateway
 
