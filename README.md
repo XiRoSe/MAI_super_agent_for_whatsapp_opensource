@@ -132,18 +132,32 @@ Open http://localhost:7777, create your account, scan the QR code with WhatsApp
 ```mermaid
 flowchart LR
   WA[WhatsApp servers] <-->|multi-device protocol| G["mai-gowa<br/>(gateway, Go)"]
-  G -->|"webhook: messages, incl. your own"| B["Mai backend<br/>FastAPI + Agno"]
+  G -->|"sealed webhook:<br/>messages, incl. your own"| B
+
+  subgraph B["Mai backend — FastAPI + Agno (one container)"]
+    R["router<br/>@mai trigger"] --> A["per-user agent<br/>memory · skills · tools"]
+    S["scheduler<br/>poller, tz-aware cron"] --> A
+    D["dashboard API + React SPA<br/>(same origin, JWT)"]
+  end
+
   B -->|"REST: send text / media"| G
-  B <--> P[(Postgres)]
-  B <--> LLM["LLM provider<br/>Together / Anthropic / OpenRouter"]
-  D["Dashboard (React SPA)"] -->|same origin, JWT| B
+  B <--> P[("Postgres<br/>sealed messages, KEK-wrapped keys")]
+  A <--> LLM["LLM provider<br/>Together / Anthropic / OpenRouter"]
+  A -->|"search → schema → run<br/>any hosted model"| REP["Replicate<br/>image · audio · video · vision"]
+  A -->|"generated Python,<br/>short-TTL SDK token"| SBX["Sandbox (optional)<br/>E2B cloud or hardened runner/"]
 ```
 
-Two containers do the work: `mai` (this repo — API + agent + dashboard in one
-image) and `gowa` (the WhatsApp gateway). Postgres holds everything. When you tag
-`@mai`, the gateway forwards your own message to Mai's webhook; the router matches
-the trigger, builds a per-user agent (model + memory + skills + tools), and sends
-the reply back through the gateway into the same chat.
+Two containers do the work: `mai` (this repo — API + agent + scheduler +
+dashboard in one image) and `gowa` (the WhatsApp gateway). Postgres holds
+everything — sealed, not plaintext. When you tag `@mai`, the gateway forwards
+your own message to Mai's webhook; the router matches the trigger, builds a
+per-user agent (model + memory + skills + tools), and sends the reply back
+through the gateway into the same chat. The scheduler enters the same pipeline
+from the other side: a timezone-aware poller fires due jobs through the very
+same agent. When a task needs a model beyond chat — image gen, transcription,
+video — the agent picks one on Replicate at runtime; when it needs real
+computation, it writes Python that runs in an isolated sandbox and talks back
+through a capped, token-scoped SDK.
 
 More detail: [ARCHITECTURE.md](ARCHITECTURE.md).
 
