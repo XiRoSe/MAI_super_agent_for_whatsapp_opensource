@@ -15,7 +15,7 @@ dependencies = [
     # Core agent runtime
     "agno>=2.6.0",
     "openai>=1.40.0",          # used by OpenAILike/OpenRouter model classes
-    "anthropic>=0.40.0",       # alternative model provider (config switch)
+    "anthropic>=0.122.0",       # alternative model provider (config switch)
     "ddgs>=6.0.0",             # DuckDuckGo web search backend (no API key)
     "replicate>=1.0.0",        # run AI models (image/video/audio/etc.) via Replicate
     "e2b-code-interpreter>=1.0.0",  # isolated cloud sandbox for run_python
