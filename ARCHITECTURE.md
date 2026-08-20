@@ -25,17 +25,21 @@ flowchart TB
   end
   DB[(Postgres / SQLite)]
   LLM[LLM provider]
+  REP["Replicate<br/>(any hosted AI model)"]
   RUN["runner/ (optional sandbox service)"]
+  E2B["E2B cloud sandbox (optional)"]
 
   GW -->|"POST /webhooks/whatsapp"| WH
   WH --> AG
   AG --> TO
   TO -->|send/read chats| GW
+  TO --> REP
   SC --> AG
   DA --> AG
   AG <--> LLM
   app <--> DB
   CE --> RUN
+  CE --> E2B
 ```
 
 ## Backend modules (`backend/`)
@@ -155,6 +159,123 @@ sequenceDiagram
 Scheduled jobs enter the same pipe from the other side: the poller finds a due
 `Schedule`, re-scopes to its owner, runs the agent, and delivers through that
 tenant's gateway device.
+
+## Subsystems in depth
+
+The three subsystems people ask about most, end to end.
+
+### Scheduling (`backend/scheduling/`)
+
+Natural language in, a validated row out, an in-process poller firing it —
+deliberately **not** an external job server, so a single container stays
+sufficient.
+
+```mermaid
+flowchart LR
+  U["@mai every weekday 8am…"] --> A[agent]
+  A -->|create_schedule| S["ScheduleSpec<br/>(spec.py — validated, tz-aware)"]
+  S -->|service.py: limits + CRUD| R[(Schedule row)]
+  P["poller.py<br/>daemon thread, every SCHEDULER_POLL_INTERVAL s"] -->|due?| R
+  P -->|fire_schedule_by_id| J["jobs.py<br/>re-scope to owner tenant"]
+  J --> AG2["agent run"] --> D["_deliver_to_target"]
+  D -->|"target_chat (where @mai was tagged)<br/>else owner's self-chat"| GW2[gateway]
+```
+
+The details that matter:
+
+- **`spec.py` is the contract.** A `ScheduleSpec` is either one-off (`run_at`)
+  or recurring (5-field `cron`), always paired with an IANA `timezone`. A bare
+  time with no known timezone is a **validation error**, not a guess — the
+  agent asks the user once and stores it. Invalid dates and malformed cron
+  fail before anything persists.
+- **`service.py`** owns CRUD plus per-user schedule limits (quota errors are
+  surfaced to the agent as tool errors, so "you're at your limit" is a normal
+  reply, not a crash).
+- **`poller.py`** is a daemon thread started by `app.py`: every
+  `SCHEDULER_POLL_INTERVAL` seconds (default 15, floor 5) it scans all tenants
+  for due schedules — a one-off whose `run_at` has passed fires exactly once;
+  a cron entry fires when `croniter` matches **in the schedule's own timezone**
+  (the server clock stays UTC). Firing is idempotent and restart-safe: state
+  lives in the row, not the thread.
+- **`jobs.py` (`fire_schedule_by_id`)** re-enters the normal agent pipeline
+  under the owner's tenant scope — a scheduled run gets the same memory,
+  skills, and tools as a live `@mai` turn.
+- **Delivery targets the origin.** `Schedule.target_chat` is captured from the
+  chat where `@mai` created it; `_deliver_to_target` sends there (text or
+  media), falling back to the owner's self-chat/DM. Edits (pause, retime,
+  retarget) go through the dashboard or plain chat.
+
+### Replicate: any model, no pinned models (`backend/tools/replicate_tools.py`)
+
+Rather than wiring specific models ("image gen = X, transcription = Y"), Mai
+gives the agent three *generic* tools and lets it choose per task:
+
+1. `search_models(query)` — find candidate models for the task at hand
+   (image generation/editing, transcription, TTS, video, upscaling…).
+2. `get_model_schema(owner/name)` — fetch that model's exact input fields.
+3. `run_model(owner/name, inputs)` — run **any public Replicate model** with a
+   JSON of inputs (`inputs` accepts a dict *or* a JSON string — LLMs produce
+   both; forcing one type was a production crash once).
+
+The toolkit is registered per turn only when `REPLICATE_API_TOKEN` is set and
+the tool router detects a generation-shaped intent — no token, no tools, no
+prompt bloat. Outputs flow back as URLs, which `media_tools.py`
+(`send_image` / `send_video`) posts into the chat as real WhatsApp media.
+
+**Inbound media is on-demand, not automatic.** The router does not
+auto-transcribe every voice note or describe every photo (cost + privacy).
+Instead it injects a tagged marker into the agent's context —
+`[Attached audio: <fetchable url> — fetch/transcribe/edit it on demand]` — and
+the agent decides whether to run a vision/Whisper model when you actually ask
+(`@mai what did she send?`). Defaults for those paths live in
+`REPLICATE_VISION_MODEL` / `REPLICATE_TRANSCRIBE_MODEL` / `REPLICATE_VIDEO_MODEL`
+(`backend/whatsapp/media_in.py`).
+
+### Sandboxed code execution (`backend/code_exec/` + `runner/`)
+
+Optional, off by default (`CODE_EXEC_ENABLED=false`). When on, the agent can
+solve compute-shaped tasks by *writing Python* that runs outside Mai's process
+and talks back through a narrow, authenticated SDK.
+
+```mermaid
+sequenceDiagram
+  participant A as agent
+  participant G as guardrails.py
+  participant X as sandbox (E2B or runner/)
+  participant S as sdk_api.py (Mai)
+  A->>G: generated Python
+  G-->>A: unsafe verdict → refuse (fails OPEN on infra errors — the sandbox is the boundary)
+  A->>X: run code + inject mai.py SDK + one-run token
+  X->>S: POST /internal/sdk/{fn} (Bearer: short-TTL token)
+  S->>S: token → tenant scope, send-cap check
+  S-->>X: structured data (chats, messages, send results)
+  X-->>A: stdout/result (size-capped)
+```
+
+Layer by layer:
+
+- **Guardrail (`guardrails.py`).** One fast LLM call screens the generated code
+  before it runs. It fails **closed** on an explicit unsafe verdict and **open**
+  on infrastructure errors — deliberate: the sandbox below is the real security
+  boundary, the guardrail only cuts obvious nonsense early. The code is treated
+  as data; instructions inside it are never followed.
+- **Two interchangeable backends** behind `dispatch.py`: **E2B**
+  (`E2B_API_KEY`) gives each run a disposable cloud VM; the self-hosted
+  **`runner/`** service (`RUNNER_URL` + `RUNNER_SHARED_SECRET`) executes each
+  run in a hardened, ephemeral subprocess — `RLIMIT_CPU` (timeout+1),
+  `RLIMIT_AS` (memory), `RLIMIT_FSIZE` (10 MB), `RLIMIT_NPROC` (64), throwaway
+  temp dir, zero state between runs (`runner/executor.py`). Neither backend
+  can see Mai's process, database, or keys.
+- **The `mai` SDK (`mai_sdk.py`)** is a single file uploaded into the sandbox
+  and imported as `mai`. Every call it makes goes over HTTP to
+  `POST /internal/sdk/{fn}` with a **one-run bearer token** minted by
+  `token_store.py`: TTL `CODE_EXEC_TOKEN_TTL_SECONDS` (default 300 s), bound to
+  one tenant, revoked when the run ends.
+- **Server-side authority.** `dispatch.py` resolves every reference against the
+  *token's* tenant — "me" is the token owner's number, never caller input — and
+  enforces the per-run outbound **send cap** (`CODE_EXEC_SEND_CAP`), so a
+  runaway or hostile script cannot spam or cross tenants. Results back into the
+  agent are size-capped (`CODE_EXEC_MAX_RESULT_CHARS`).
 
 ## Invariants worth knowing before you patch anything
 
