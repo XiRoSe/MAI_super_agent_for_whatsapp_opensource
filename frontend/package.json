@@ -13,8 +13,8 @@
   "dependencies": {
     "@ant-design/icons": "^5.5.0",
     "antd": "^5.21.0",
-    "axios": "^1.7.0",
-    "dayjs": "^1.11.0",
+    "axios": "^1.19.0",
+    "dayjs": "^1.11.23",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.18.2"
