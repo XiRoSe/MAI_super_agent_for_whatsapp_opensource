@@ -38,7 +38,7 @@ dependencies = [
     "croniter>=2.0.0",
     "python-dateutil>=2.9.0",
     "tzdata>=2024.1",          # IANA tz database (needed on Windows)
-    "pytz>=2024.1",            # agno scheduler requires pytz
+    "pytz>=2026.3.post1",            # agno scheduler requires pytz
     # Dashboard auth (JWT + password hashing)
     "pyjwt>=2.8.0",
     "bcrypt>=4.1.0",
