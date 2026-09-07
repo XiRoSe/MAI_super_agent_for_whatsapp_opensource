@@ -36,7 +36,7 @@ dependencies = [
     "pynacl>=1.5.0",          # NaCl sealed boxes (X25519 + XSalsa20-Poly1305) for the encrypted message store
     # Scheduling helpers
     "croniter>=2.0.0",
-    "python-dateutil>=2.9.0",
+    "python-dateutil>=2.9.0.post0",
     "tzdata>=2024.1",          # IANA tz database (needed on Windows)
     "pytz>=2024.1",            # agno scheduler requires pytz
     # Dashboard auth (JWT + password hashing)
