@@ -24,7 +24,7 @@ dependencies = [
     "uvicorn[standard]>=0.29.0",
     "httpx>=0.27.0",
     # Config & validation
-    "pydantic>=2.6.0",
+    "pydantic>=2.13.4",
     "pydantic-settings>=2.2.0",
     "python-dotenv>=1.0.0",
     "numpy>=1.26.0",           # cosine math for semantic memory/skill recall
