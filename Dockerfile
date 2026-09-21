@@ -2,7 +2,7 @@
 # serves both the API and the SPA (one service, one domain, no CORS).
 
 # ---- Stage 1: build the frontend ----
-FROM node:20-slim AS fe
+FROM node:25-slim AS fe
 WORKDIR /fe
 COPY frontend/package*.json ./
 RUN npm ci
