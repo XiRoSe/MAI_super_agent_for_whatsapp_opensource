@@ -12,7 +12,7 @@ ENV VITE_API_URL=""
 RUN npm run build
 
 # ---- Stage 2: the backend (serves API + the built SPA) ----
-FROM python:3.11-slim
+FROM python:3.12-slim
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 
